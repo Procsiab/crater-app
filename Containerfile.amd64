@@ -1,0 +1,64 @@
+FROM amd64/php:7.4-fpm-alpine3.15
+
+# Configuration parameters (with application defaults)
+ARG user=crater-user
+ARG uid=1000
+ARG version=6.0.2
+
+# Install system dependencies
+RUN apk --no-cache update && apk --no-cache add git \
+    curl \
+    zip \
+    unzip \
+    shadow \
+    postgresql-client \
+    libpq-dev \
+    libzip-dev \
+    imagemagick-dev \
+    libpng-dev \
+    oniguruma-dev \
+    libxml2-dev \
+    autoconf \
+    gcc \
+    musl-dev \
+    make
+
+RUN pecl install imagick \
+    && docker-php-ext-enable imagick
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_pgsql mbstring zip exif pcntl bcmath gd
+
+# Get latest Composer
+COPY --from=amd64/composer:2.2.6 /usr/bin/composer /usr/bin/composer
+
+# Create system user to run Composer and Artisan commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+# Create composer workdir with permissions
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+# Install PHP uploads config
+COPY uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+# Install crontab
+COPY crontab /etc/crontabs/$user
+
+# Download app code from Git repo
+RUN wget -q https://github.com/crater-invoice/crater/archive/refs/tags/$version.zip -O /tmp/crater-app.zip && \
+    unzip /tmp/crater-app.zip -d /var/www && \
+    cp -r /var/www/crater-$version/. /var/www/
+# Create default env file and set ownership
+RUN cat /var/www/.env.example > /var/www/.env && \
+    chown -R $user:www-data /var/www && \
+    rm -rf /tmp/crater-app.zip /var/www/crater-$version
+# Update app folders permissions
+RUN chmod -R 775 /var/www/storage/framework /var/www/storage/logs /var/www/bootstrap/cache
+
+# Set working directory
+WORKDIR /var/www
+# Change user
+USER $user
+# Run initial setup
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader && \
+    php artisan storage:link || true && \
+    php artisan key:generate --force

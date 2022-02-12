@@ -1,0 +1,27 @@
+services:
+  app:
+    image: procsiab/crater-app:v1.0-amd64
+    ports:
+      - '9000:9000'
+    volumes:
+      - app-share:/var/www:z
+  db:
+    image: amd64/postgres:14.2-alpine3.15
+    volumes:
+      - ./data:/var/lib/postgresql/:Z
+    environment:
+      - POSTGRES_USER=crater
+      - POSTGRES_PASSWORD=crater
+      - POSTGRES_DB=crater
+    ports:
+      - '15432:5432'
+  web:
+    image: amd64/nginx:1.21.6-alpine
+    ports:
+      - '8080:80'
+    volumes:
+      - ./nginx:/etc/nginx/conf.d/:Z
+      - app-share:/var/www:z
+
+volumes:
+  app-share:

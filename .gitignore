@@ -1,0 +1,4 @@
+# Database persistent files
+compose/data
+# QEMU's static binaries
+qemu-*
