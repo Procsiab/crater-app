@@ -5,7 +5,7 @@ COPY qemu-aarch64-static /usr/bin/
 # Configuration parameters (with application defaults)
 ARG user=crater-user
 ARG uid=1000
-ARG version=6.0.2
+ARG version=6.0.4
 
 # Install system dependencies
 RUN apk --no-cache update && apk --no-cache add git \
