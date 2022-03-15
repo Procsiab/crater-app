@@ -1,18 +1,19 @@
 services:
   app:
-    image: procsiab/crater-app:v1.1-amd64
+    image: procsiab/crater-app:v1.2-amd64
     ports:
       - '9000:9000'
     volumes:
       - app-share:/var/www:z
   db:
-    image: amd64/postgres:14.2-alpine3.15
+    image: amd64/mariadb:10.7.3-focal
     volumes:
-      - ./data:/var/lib/postgresql/data:Z
+      - ./data:/var/lib/mysql/data:Z
     environment:
-      - POSTGRES_USER=crater
-      - POSTGRES_PASSWORD=crater
-      - POSTGRES_DB=crater
+      - MYSQL_USER=crater
+      - MYSQL_PASSWORD=crater
+      - MYSQL_DATABASE=crater
+      - MYSQL_ROOT_PASSWORD=crater
     ports:
       - '15432:5432'
   web:
