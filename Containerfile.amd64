@@ -1,9 +1,5 @@
-FROM amd64/php:7.4.28-fpm-alpine3.15
-
-# Configuration parameters (with application defaults)
-ARG user=crater-user
-ARG uid=1000
-ARG version=6.0.6
+ARG PHP_VERSION=7.4.28
+FROM docker.io/amd64/php:${PHP_VERSION}-fpm-alpine3.15
 
 # Install system dependencies
 RUN apk --no-cache update && apk --no-cache add git \
@@ -11,6 +7,7 @@ RUN apk --no-cache update && apk --no-cache add git \
     zip \
     unzip \
     shadow \
+    git \
     mariadb-client \
     libzip-dev \
     imagemagick-dev \
@@ -28,35 +25,36 @@ RUN pecl install imagick \
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
-# Get latest Composer
-COPY --from=amd64/composer:2.2.6 /usr/bin/composer /usr/bin/composer
+# Install Composer
+ARG COMPOSER_VERSION=2.2.6
+COPY --from=docker.io/amd64/composer:${COMPOSER_VERSION} /usr/bin/composer /usr/bin/composer
 
 # Create system user to run Composer and Artisan commands
-RUN useradd -G www-data,root -u $uid -d /home/$user $user
+ARG APP_UID=1000
+ARG APP_USER=crater-user
+RUN useradd -G www-data,root -u $APP_UID -d /home/$APP_USER $APP_USER
 # Create composer workdir with permissions
-RUN mkdir -p /home/$user/.composer && \
-    chown -R $user:$user /home/$user
+RUN mkdir -p /home/$APP_USER/.composer && \
+    chown -R ${APP_USER}:${APP_USER} /home/${APP_USER}
 
 # Install PHP uploads config
-COPY uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+COPY uploads.ini /usr/local/etc/php/conf.d/uploads.iniWX
 # Install crontab
-COPY crontab /etc/crontabs/$user
+COPY crontab /etc/crontabs/${APP_USER}
 
-# Download app code from Git repo
-RUN wget -q https://github.com/crater-invoice/crater/archive/refs/tags/$version.zip -O /tmp/crater-app.zip && \
-    unzip /tmp/crater-app.zip -d /var/www && \
-    cp -r /var/www/crater-$version/. /var/www/
-# Create default env file and set ownership
-RUN cat /var/www/.env.example > /var/www/.env && \
-    chown -R $user:www-data /var/www && \
-    rm -rf /tmp/crater-app.zip /var/www/crater-$version
+# Download app code from Git, create default .env
+ARG APP_VERSION=6.0.6
+RUN cd /var && rm -rf www && \
+    git clone --depth 1 --branch $APP_VERSION https://github.com/crater-invoice/crater www && \
+    cat /var/www/.env.example > /var/www/.env && \
+    chown -R ${APP_USER}:www-data /var/www
 # Update app folders permissions
 RUN chmod -R 775 /var/www/storage/framework /var/www/storage/logs /var/www/bootstrap/cache
 
 # Set working directory
 WORKDIR /var/www
 # Change user
-USER $user
+USER $APP_USER
 # Run initial setup
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader && \
     php artisan storage:link || true && \

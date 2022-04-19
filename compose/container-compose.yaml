@@ -1,12 +1,12 @@
 services:
   app:
-    image: procsiab/crater-app:v1.2-amd64
+    image: docker.io/procsiab/crater-app:v1.2-amd64
     ports:
       - '9000:9000'
     volumes:
-      - app-share:/var/www:z
+      - ./app:/var/www:z
   db:
-    image: amd64/mariadb:10.7.3-focal
+    image: docker.io/amd64/mariadb:10.7.3-focal
     volumes:
       - ./data:/var/lib/mysql/data:Z
     environment:
@@ -17,12 +17,9 @@ services:
     ports:
       - '15432:5432'
   web:
-    image: amd64/nginx:1.21.6-alpine
+    image: docker.io/amd64/nginx:1.21.6-alpine
     ports:
       - '8080:80'
     volumes:
       - ./nginx:/etc/nginx/conf.d/:Z
-      - app-share:/var/www:z
-
-volumes:
-  app-share:
+      - ./app:/var/www:z

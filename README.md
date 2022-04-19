@@ -1,4 +1,8 @@
-# crater-app OCI Container
+# Crater OCI Container
+
+[![Container Build](https://github.com/Procsiab/crater-app/actions/workflows/build-container-publish-dockerhub.yaml/badge.svg)](https://github.com/Procsiab/crater-app/actions/workflows/build-container-publish-dockerhub.yaml)
+
+![Docker Image Version (latest by date)](https://img.shields.io/docker/v/procsiab/crater-app?label=Latest%20tag%20pushed%20on%20Docker%20Hub)
 
 This repo contains the files to build a container for the Crater invoicing app, and also to setup a testing environment to play around with it (through the use of podman-compose).
 
@@ -30,13 +34,20 @@ Differing from the original `crater-invoice` setup, I also made the build proces
 
 ### Prequisite
 
-You should have installed the `podman-compose` script.
+You should have installed the `podman-compose` script, and root permissions through `sudo`.
+
+### init-env.sh
+
+Inside the `compose` subfolder there is a script called `init-env.sh`: it **must** be run before starting the environment with podman-compose; it will create the necessary folders, set their permissions and copy the application's source inside the shared app folder.
+
+This script can also be run to delete all data and initialize the environment (even the database's persistent data will be removed!).
 
 ### podman-compose
 
 Open the subfolder `compose` in a terminal, then run (also as non-root, with podman-compose):
 
 ```bash
+./init-env.sh
 podman-compose up -d
 ```
 
@@ -48,7 +59,7 @@ To stop the containers, run `podman-compose down` from teh same folder.
 
 **NOTE**: This compose setup will create a Podman volume called `crater`: it will be used to share the application code with the Nginx container and also to store some application settings; the database container will by default use a local filesystem folder (called `data`, inside the `compose` subfolder) to store its data.
 
-**NOTE**: My container image build has only the PostgreSQL drivers, not MySQL ones for MariaDB interaction
+**NOTE**: My container image build has only the MySQL drivers, not the PostgreSQL ones.
 
 ## Issues
 
