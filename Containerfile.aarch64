@@ -1,4 +1,4 @@
-ARG PHP_VERSION=7.4.28
+ARG PHP_VERSION=7.4.29
 FROM docker.io/arm64v8/php:${PHP_VERSION}-fpm-alpine3.15
 
 COPY qemu-aarch64-static /usr/bin/
@@ -9,7 +9,6 @@ RUN apk --no-cache update && apk --no-cache add git \
     zip \
     unzip \
     shadow \
-    git \
     mariadb-client \
     libzip-dev \
     imagemagick-dev \
@@ -28,8 +27,7 @@ RUN pecl install imagick \
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
 # Install Composer
-ARG COMPOSER_VERSION=2.2.6
-COPY --from=docker.io/arm64v8/composer:${COMPOSER_VERSION} /usr/bin/composer /usr/bin/composer
+COPY --from=docker.io/arm64v8/composer:2.3.5 /usr/bin/composer /usr/bin/composer
 
 # Create system user to run Composer and Artisan commands
 ARG APP_UID=1000
@@ -60,7 +58,8 @@ USER $APP_USER
 # Run initial setup
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader && \
     php artisan storage:link || true && \
-    php artisan key:generate --force
+    php artisan key:generate --force && \
+    composer update --no-interaction
 
 USER root
 RUN rm -rf /usr/bin/qemu-aarch64-static
