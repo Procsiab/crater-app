@@ -1,6 +1,6 @@
 services:
   app:
-    image: docker.io/procsiab/crater-app:v1.2-amd64
+    image: docker.io/procsiab/crater-app:v1.3-amd64
     ports:
       - '9000:9000'
     volumes:
@@ -8,14 +8,14 @@ services:
   db:
     image: docker.io/amd64/mariadb:10.7.3-focal
     volumes:
-      - ./data:/var/lib/mysql/data:Z
+      - ./data:/var/lib/mysql:Z
     environment:
       - MYSQL_USER=crater
       - MYSQL_PASSWORD=crater
       - MYSQL_DATABASE=crater
       - MYSQL_ROOT_PASSWORD=crater
     ports:
-      - '15432:5432'
+      - '13306:3306'
   web:
     image: docker.io/amd64/nginx:1.21.6-alpine
     ports:
